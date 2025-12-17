@@ -76,7 +76,7 @@
 
     <div class="animate-fadeIn">
       <app-empleado-form *ngIf="activeTab === 'register'" (success)="handleSuccess()"></app-empleado-form>
-      <app-empleados-list *ngIf="activeTab === 'list'" [refreshKey]="refreshKey"></app-empleados-list>
+      <app-empleados-list *ngIf="activeTab === 'list'"></app-empleados-list>
     </div>
   </div>
 
