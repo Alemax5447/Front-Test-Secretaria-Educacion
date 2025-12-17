@@ -81,40 +81,38 @@
 				<table class="w-full">
 					<thead>
 						<tr class="border-b-2 border-gray-200">
+							<!-- id_empleado oculto -->
+							<th class="hidden">ID</th>
 							<th class="text-left py-4 px-4 font-semibold text-gray-700">Nombre</th>
+							<th class="text-left py-4 px-4 font-semibold text-gray-700">Apellidos</th>
 							<th class="text-left py-4 px-4 font-semibold text-gray-700">CURP</th>
-							<th class="text-left py-4 px-4 font-semibold text-gray-700">Ubicación</th>
-							<th class="text-left py-4 px-4 font-semibold text-gray-700">Registro</th>
+							<th class="text-left py-4 px-4 font-semibold text-gray-700">Estado</th>
+							<th class="text-left py-4 px-4 font-semibold text-gray-700">Municipio</th>
+							<th class="text-left py-4 px-4 font-semibold text-gray-700">Localidad</th>
+							<th class="text-left py-4 px-4 font-semibold text-gray-700">Fecha de Creación</th>
+							<th class="text-left py-4 px-4 font-semibold text-gray-700">Acciones</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr *ngFor="let empleado of filteredEmpleados" class="border-b border-gray-100 hover:bg-gray-50 transition">
-							<td class="py-4 px-4">
-								<div>
-									<p class="font-medium text-gray-900">
-										{{ empleado.nombre }} {{ empleado.apellidos }}
-									</p>
-								</div>
-							</td>
-							<td class="py-4 px-4">
-								<span class="font-mono text-sm text-gray-600">{{ empleado.curp }}</span>
-							</td>
-							<td class="py-4 px-4">
-								<div class="flex items-start gap-2">
-									<!-- MapPin Lucide Icon -->
-									<svg class="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 21s-6-5.686-6-10A6 6 0 0 1 18 11c0 4.314-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></svg>
-									<div class="text-sm text-gray-600">
-										<p>{{ empleado.localidad }}</p>
-										<p class="text-gray-500">
-											{{ empleado.municipio }}, {{ empleado.estado }}
-										</p>
-									</div>
-								</div>
-							</td>
+							<td class="hidden">{{ empleado.id_empleado }}</td>
+							<td class="py-4 px-4">{{ empleado.nombre }}</td>
+							<td class="py-4 px-4">{{ empleado.apellidos }}</td>
+							<td class="py-4 px-4"><span class="font-mono text-sm text-gray-600">{{ empleado.curp }}</span></td>
+							<td class="py-4 px-4">{{ empleado.estado }}</td>
+							<td class="py-4 px-4">{{ empleado.municipio }}</td>
+							<td class="py-4 px-4">{{ empleado.localidad }}</td>
 							<td class="py-4 px-4">
 								<span class="text-sm text-gray-500">
 									{{ empleado.created_at | date:'dd MMM yyyy' : undefined : 'es-MX' }}
 								</span>
+							</td>
+							<td class="py-4 px-4">
+								<button (click)="eliminarEmpleado(empleado.id_empleado)" class="bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-3 py-1 rounded flex items-center gap-1 transition" title="Eliminar empleado">
+									<!-- Trash Lucide Icon -->
+									<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>
+									Eliminar
+								</button>
 							</td>
 						</tr>
 					</tbody>

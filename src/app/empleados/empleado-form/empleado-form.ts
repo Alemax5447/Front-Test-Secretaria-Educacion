@@ -1,7 +1,8 @@
 
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { Api } from '../../service/api';
 
 @Component({
   selector: 'app-empleado-form',
@@ -21,7 +22,7 @@ export class EmpleadoFormComponent {
 
 
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private api: Api, private cdr: ChangeDetectorRef) {
     this.form = this.fb.group({
       nombre: ['', Validators.required],
       apellidos: ['', Validators.required],
@@ -39,24 +40,76 @@ export class EmpleadoFormComponent {
     this.extracting = true;
     this.error = '';
     try {
+      const img = new Image();
       const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64String = reader.result as string;
-        try {
-          // Simulación de extracción de datos INE
-          const extractedData = await this.extractINEData(base64String);
-          this.form.patchValue(extractedData);
-          this.successMsg = 'Datos extraídos correctamente de la credencial INE';
-          setTimeout(() => (this.successMsg = ''), 3000);
-        } catch (err: any) {
-          this.error = err?.message || 'Error al extraer datos';
-        } finally {
-          this.extracting = false;
-        }
+
+      reader.onload = async (e) => {
+        img.onload = async () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0);
+          canvas.toBlob(async (blob) => {
+            if (blob) {
+              const pngFile = new File([blob], file.name.replace(/\.[^/.]+$/, '') + '.png', { type: 'image/png' });
+              this.api.subirImagenINE(pngFile).subscribe({
+                next: (response) => {
+                  if (response && typeof response === 'object') {
+                    this.form.patchValue(response);
+                    this.successMsg = 'Datos extraídos correctamente de la credencial INE';
+                    setTimeout(() => (this.successMsg = ''), 3000);
+                  }
+                },
+                error: (err) => {
+                  // Manejo robusto de errores según la estructura del backend
+                  let msg = '';
+                  const errorObj = err?.error;
+                  if (errorObj) {
+                    if (typeof errorObj === 'string') {
+                      msg = errorObj;
+                    } else if (typeof errorObj === 'object') {
+                      if (errorObj.error) {
+                        msg = errorObj.error;
+                      } else if (errorObj.mensaje) {
+                        msg = errorObj.mensaje;
+                      }
+                      if (errorObj.faltantes && Array.isArray(errorObj.faltantes) && errorObj.faltantes.length > 0) {
+                        msg += (msg ? ' ' : '') + 'Faltan campos: ' + errorObj.faltantes.join(', ');
+                      }
+                      if (errorObj.detalle_bd) {
+                        msg += (msg ? ' | ' : '') + 'Detalle BD: ' + errorObj.detalle_bd;
+                      }
+                      if (errorObj.detalle) {
+                        msg += (msg ? ' | ' : '') + 'Detalle: ' + (typeof errorObj.detalle === 'string' ? errorObj.detalle : JSON.stringify(errorObj.detalle));
+                      }
+                      // Si no hay mensaje, mostrar el objeto como string
+                      if (!msg) {
+                        msg = JSON.stringify(errorObj);
+                      }
+                    }
+                  }
+                  if (!msg) {
+                    msg = err?.message || 'Error al extraer datos';
+                  }
+                  this.error = msg;
+                  this.cdr.detectChanges();
+                },
+                complete: () => {
+                  this.extracting = false;
+                },
+              });
+            } else {
+              this.error = 'No se pudo convertir la imagen a PNG';
+              this.extracting = false;
+            }
+          }, 'image/png');
+        };
+        img.src = e.target?.result as string;
       };
       reader.readAsDataURL(file);
     } catch (err) {
-      this.error = 'Error al leer la imagen';
+      this.error = 'Error al procesar la imagen';
       this.extracting = false;
     }
   }
