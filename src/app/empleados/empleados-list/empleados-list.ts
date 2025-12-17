@@ -1,9 +1,9 @@
-
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Api } from '../../service/api';
 
-interface Empleado {
+export interface Empleado {
   id_empleado: number;
   nombre: string;
   apellidos: string;
@@ -29,56 +29,51 @@ export class EmpleadosListComponent {
   estadoFilter = '';
   municipioFilter = '';
 
+  constructor(private api: Api) {}
+
   ngOnInit() {
     this.loadEmpleados();
   }
 
-  async loadEmpleados() {
+  loadEmpleados() {
     this.loading = true;
     this.error = '';
-    try {
-      // Simulación de datos
-      const data: Empleado[] = [
-        {
-          id_empleado: 1,
-          nombre: 'Juan',
-          apellidos: 'Pérez',
-          curp: 'CURP123456789012',
-          estado: 'CDMX',
-          municipio: 'Benito Juárez',
-          localidad: 'Del Valle',
-          created_at: '2025-12-01T10:00:00Z',
-        },
-        {
-          id_empleado: 2,
-          nombre: 'Ana',
-          apellidos: 'López',
-          curp: 'CURP987654321098',
-          estado: 'EdoMex',
-          municipio: 'Naucalpan',
-          localidad: 'Centro',
-          created_at: '2025-12-10T12:30:00Z',
-        },
-        {
-          id_empleado: 3,
-          nombre: 'Luis',
-          apellidos: 'Martínez',
-          curp: 'CURP456789123456',
-          estado: 'CDMX',
-          municipio: 'Coyoacán',
-          localidad: 'Copilco',
-          created_at: '2025-12-15T09:15:00Z',
-        },
-      ];
-      // Simula retardo
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      this.empleados = data;
-    } catch (err: any) {
-      this.error = err?.message || 'Error al cargar empleados';
-    } finally {
-      this.loading = false;
-    }
+    this.api.getEmpleados().subscribe({
+      next: (response: any) => {
+        // Si la respuesta tiene 'data', úsala; si no, usa el array directo
+        this.empleados = Array.isArray(response) ? response : response?.data || [];
+        this.loading = false;
+      },
+      error: (err) => {
+        this.error =
+          err?.error?.error ||
+          err?.error?.message ||
+          (typeof err?.error === 'string' ? err.error : '') ||
+          err?.message ||
+          'Error al cargar empleados';
+        this.loading = false;
+      },
+    });
   }
+
+  eliminarEmpleado(id: number) {
+      if (!confirm('¿Seguro que deseas eliminar este empleado?')) return;
+      this.loading = true;
+      this.api.deleteEmpleado(id).subscribe({
+        next: () => {
+          this.loadEmpleados();
+        },
+        error: (err) => {
+          this.error =
+            err?.error?.error ||
+            err?.error?.message ||
+            (typeof err?.error === 'string' ? err.error : '') ||
+            err?.message ||
+            'Error al eliminar empleado';
+          this.loading = false;
+        },
+      });
+    }
 
   get filteredEmpleados() {
     return this.empleados
